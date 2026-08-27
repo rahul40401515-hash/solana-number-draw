@@ -372,6 +372,7 @@ export async function executeRoundDraw(roundId: string): Promise<DrawResult> {
       where: {
         roundId,
         status: { in: ['PURCHASED', 'WINNER'] },
+        userId: { not: null },
       },
       select: {
         id: true,
@@ -384,10 +385,13 @@ export async function executeRoundDraw(roundId: string): Promise<DrawResult> {
       throw new GameError('DRAW_NOT_READY', 'Not enough purchased numbers for draw');
     }
 
-    // Execute the draw
+    // Execute the draw (userId is guaranteed non-null due to filter above)
     const result = executeDraw({
       roundId,
-      purchasedNumbers,
+      purchasedNumbers: purchasedNumbers.map(p => ({
+        ...p,
+        userId: p.userId as string,
+      })),
       winnerCount: round.winnerCount,
     });
 
