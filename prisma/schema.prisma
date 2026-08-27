@@ -250,8 +250,6 @@ model AuditLog {
   ipAddress   String?   @map("ip_address")
   timestamp   DateTime  @default(now())
 
-  round       GameRound? @relation(fields: [roundId], references: [id])
-
   @@index([roundId])
   @@index([eventType])
   @@index([timestamp])
