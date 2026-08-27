@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
         chunk.push({
           roundId: round.id,
           numberValue: j,
-          status: 'AVAILABLE',
+          status: 'AVAILABLE' as const,
         });
       }
       await prisma.number.createMany({ data: chunk });
