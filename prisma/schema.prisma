@@ -33,7 +33,6 @@ model User {
   reservedNumbers Number[]    @relation("ReservedNumbers")
   winners         Winner[]
   sessions        Session[]
-  auditLogEntries AuditLog[]
 
   @@map("users")
 }
@@ -83,7 +82,6 @@ model GameRound {
   purchases             Purchase[]
   draws                 RandomnessDraw[]
   winners               Winner[]
-  auditLogEntries       AuditLog[]
 
   @@map("game_rounds")
 }
