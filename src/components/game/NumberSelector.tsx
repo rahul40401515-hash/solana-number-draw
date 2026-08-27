@@ -17,7 +17,7 @@ interface NumberSelectorProps {
   onClose: () => void;
 }
 
-type NumberStatus = 'AVAILABLE' | 'TAKEN' | 'SELECTED' | 'RESERVED' | 'WINNER';
+type NumberStatus = 'AVAILABLE' | 'TAKEN' | 'PURCHASED' | 'SELECTED' | 'RESERVED' | 'WINNER';
 
 interface NumberCell {
   value: number;
