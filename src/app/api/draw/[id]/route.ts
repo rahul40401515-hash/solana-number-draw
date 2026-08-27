@@ -22,7 +22,7 @@ export async function GET(
     const round = await prisma.gameRound.findUnique({
       where: { id: roundId },
       include: {
-        draw: {
+        draws: {
           select: {
             id: true,
             randomnessProvider: true,
@@ -73,15 +73,15 @@ export async function GET(
           prizePerWinnerLamports: prizePerWinner.toString(),
           completedAt: round.completedAt?.toISOString(),
         },
-        draw: round.draw ? {
-          id: round.draw.id,
-          provider: round.draw.randomnessProvider,
-          status: round.draw.status,
-          snapshotHash: round.draw.snapshotHash,
-          randomnessValue: round.draw.randomnessValue,
-          commitment: round.draw.commitment,
-          generatedAt: round.draw.generatedAt?.toISOString(),
-          verificationData: round.draw.verificationData,
+        draw: round.draws[0] ? {
+          id: round.draws[0].id,
+          provider: round.draws[0].randomnessProvider,
+          status: round.draws[0].status,
+          snapshotHash: round.draws[0].snapshotHash,
+          randomnessValue: round.draws[0].randomnessValue,
+          commitment: round.draws[0].commitment,
+          generatedAt: round.draws[0].generatedAt?.toISOString(),
+          verificationData: round.draws[0].verificationData,
         } : null,
         winners: round.winners.map((w) => ({
           rank: w.rank,
