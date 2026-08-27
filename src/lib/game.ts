@@ -397,8 +397,8 @@ export async function executeRoundDraw(roundId: string): Promise<DrawResult> {
 
     // Calculate prize per winner
     const operatorFee = round.operatorFeePercent
-      ? (round.prizePoolLamports * BigInt(Math.round(round.operatorFeePercent))) / 100n
-      : 0n;
+      ? (round.prizePoolLamports * BigInt(Math.round(round.operatorFeePercent))) / BigInt(100)
+      : BigInt(0);
     const distributablePool = round.prizePoolLamports - operatorFee;
     const prizePerWinner = distributablePool / BigInt(round.winnerCount);
 
