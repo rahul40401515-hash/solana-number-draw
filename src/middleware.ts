@@ -44,7 +44,8 @@ export function middleware(request: NextRequest) {
 
     // Clean up old entries periodically
     if (rateLimitStore.size > 10000) {
-      for (const [k, v] of rateLimitStore) {
+      const entries = Array.from(rateLimitStore.entries());
+      for (const [k, v] of entries) {
         if (v.resetAt < now) rateLimitStore.delete(k);
       }
     }
