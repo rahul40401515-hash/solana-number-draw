@@ -172,7 +172,7 @@ export async function verifyPayment(
       amountLamports: amountReceived,
       status: 'confirmed',
       confirmations: 1, // Will be updated with actual count
-      blockTime: tx.blockTime,
+      blockTime: tx.blockTime ?? null,
       slot: tx.slot,
     };
 
