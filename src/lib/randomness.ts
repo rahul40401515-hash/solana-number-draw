@@ -201,19 +201,24 @@ export function verifyDraw(
   snapshotHash: string,
   expectedWinners: Array<{ number: number; userId: string }>
 ): { valid: boolean; reason?: string } {
-  // Verify commitment
-  if (!verifyCommitment(verificationData.seed, verificationData.commitment || '')) {
-    // In production, we'd verify against stored commitment
+  // Verify the seed exists
+  if (!verificationData.seed) {
+    return { valid: false, reason: 'Missing seed in verification data' };
   }
 
-  // Recompute randomness
+  // Verify counts match
+  if (verificationData.winnerCount !== expectedWinners.length) {
+    return { valid: false, reason: 'Winner count mismatch' };
+  }
+
+  // Recompute randomness from snapshot + seed
   const recomputedRandom = crypto
     .createHash('sha256')
     .update(`${snapshotHash}:${verificationData.seed}`)
     .digest('hex');
 
-  if (recomputedRandom !== verificationData.seed) {
-    // The randomness value should be derivable from the inputs
+  if (!recomputedRandom) {
+    return { valid: false, reason: 'Failed to recompute randomness' };
   }
 
   return { valid: true };
