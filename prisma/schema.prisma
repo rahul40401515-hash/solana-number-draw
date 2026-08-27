@@ -1,0 +1,274 @@
+// Prisma Schema - Solana Number Draw
+// Run: npx prisma generate && npx prisma db push
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// USERS
+// ─────────────────────────────────────────────
+model User {
+  id              String    @id @default(uuid())
+  telegramUserId  String    @unique @map("telegram_user_id")
+  telegramUsername String?  @map("telegram_username")
+  firstName       String?   @map("first_name")
+  lastName        String?   @map("last_name")
+  walletAddress   String?   @unique @map("wallet_address")
+  profilePhotoUrl String?   @map("profile_photo_url")
+  isBlocked       Boolean   @default(false) @map("is_blocked")
+  isAdmin         Boolean   @default(false) @map("is_admin")
+  isVerified      Boolean   @default(false) @map("is_verified")
+  languageCode    String?   @map("language_code")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  purchases       Purchase[]
+  numbers         Number[]
+  winners         Winner[]
+  sessions        Session[]
+  auditLogs       AuditLog[]
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────
+// GAME ROUNDS
+// ─────────────────────────────────────────────
+enum RoundStatus {
+  DRAFT
+  OPEN
+  PAUSED
+  CLOSING
+  DRAW_PENDING
+  COMPLETED
+  CANCELLED
+}
+
+model GameRound {
+  id                    String      @id @default(uuid())
+  roundNumber           Int         @unique @map("round_number")
+  title                 String?
+  description           String?
+  status                RoundStatus @default(DRAFT)
+  startAt               DateTime    @map("start_at")
+  endAt                 DateTime    @map("end_at")
+  entryPriceLamports    BigInt      @map("entry_price_lamports")
+  numberMin             Int         @default(1) @map("number_min")
+  numberMax             Int         @default(5000) @map("number_max")
+  winnerCount           Int         @default(5) @map("winner_count")
+  prizePoolLamports     BigInt      @default(0) @map("prize_pool_lamports")
+  totalEntries          Int         @default(0) @map("total_entries")
+  operatorFeePercent    Float       @default(0) @map("operator_fee_percent")
+  operatorFeeLamports   BigInt      @default(0) @map("operator_fee_lamports")
+  minEntries            Int         @default(1) @map("min_entries")
+  maxEntries            Int?        @map("max_entries")
+  allowRollover         Boolean     @default(false) @map("allow_rollover")
+  adminWinsUnclaimed    Boolean     @default(true) @map("admin_wins_unclaimed")
+  treasuryWallet        String      @map("treasury_wallet")
+  network               String      @default("devnet")
+  frozenAt              DateTime?   @map("frozen_at")
+  completedAt           DateTime?   @map("completed_at")
+  cancelledAt           DateTime?   @map("cancelled_at")
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @updatedAt @map("updated_at")
+
+  numbers               Number[]
+  purchases             Purchase[]
+  draws                 RandomnessDraw[]
+  winners               Winner[]
+  auditLogs             AuditLog[]
+
+  @@map("game_rounds")
+}
+
+// ─────────────────────────────────────────────
+// NUMBERS (per round)
+// ─────────────────────────────────────────────
+enum NumberStatus {
+  AVAILABLE
+  RESERVED
+  PURCHASED
+  WINNER
+}
+
+model Number {
+  id                  String        @id @default(uuid())
+  roundId             String        @map("round_id")
+  numberValue         Int           @map("number_value")
+  status              NumberStatus  @default(AVAILABLE)
+  userId              String?       @map("user_id")
+  reservedByUserId    String?       @map("reserved_by_user_id")
+  reservationExpiresAt DateTime?    @map("reservation_expires_at")
+  purchasedAt         DateTime?     @map("purchased_at")
+
+  round               GameRound     @relation(fields: [roundId], references: [id])
+  user                User?         @relation(fields: [userId], references: [id])
+  reservedByUser      User?         @relation("ReservedNumbers", fields: [reservedByUserId], references: [id])
+  purchases           Purchase[]
+
+  @@unique([roundId, numberValue])
+  @@index([roundId, status])
+  @@index([roundId, userId])
+  @@index([reservationExpiresAt])
+  @@map("numbers")
+}
+
+// ─────────────────────────────────────────────
+// PURCHASES
+// ─────────────────────────────────────────────
+enum PurchaseStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+model Purchase {
+  id                  String          @id @default(uuid())
+  roundId             String          @map("round_id")
+  userId              String          @map("user_id")
+  numberId            String          @map("number_id")
+  walletAddress       String          @map("wallet_address")
+  amountLamports      BigInt          @map("amount_lamports")
+  transactionSignature String?        @unique @map("transaction_signature")
+  status              PurchaseStatus  @default(PENDING)
+  confirmedAt         DateTime?       @map("confirmed_at")
+  failedAt            DateTime?       @map("failed_at")
+  failureReason       String?         @map("failure_reason")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+
+  round               GameRound       @relation(fields: [roundId], references: [id])
+  user                User            @relation(fields: [userId], references: [id])
+  number              Number          @relation(fields: [numberId], references: [id])
+
+  @@index([roundId, userId])
+  @@index([transactionSignature])
+  @@index([walletAddress])
+  @@map("purchases")
+}
+
+// ─────────────────────────────────────────────
+// RANDOMNESS DRAWS
+// ─────────────────────────────────────────────
+enum DrawStatus {
+  PENDING
+  COMMITTED
+  REVEALED
+  EXECUTED
+  VERIFIED
+  FAILED
+}
+
+model RandomnessDraw {
+  id                  String      @id @default(uuid())
+  roundId             String      @unique @map("round_id")
+  randomnessProvider  String      @map("randomness_provider")
+  commitment          String?     // Hash commitment before reveal
+  randomnessValue     String?     @map("randomness_value") // The actual random value
+  seed                String?     // Additional seed data
+  snapshotHash        String?     @map("snapshot_hash") // Hash of purchased numbers at draw time
+  generatedAt         DateTime?   @map("generated_at")
+  verificationData    Json?       @map("verification_data") // Full proof data
+  status              DrawStatus  @default(PENDING)
+  createdAt           DateTime    @default(now()) @map("created_at")
+  updatedAt           DateTime    @updatedAt @map("updated_at")
+
+  round               GameRound   @relation(fields: [roundId], references: [id])
+
+  @@map("randomness_draws")
+}
+
+// ─────────────────────────────────────────────
+// WINNERS
+// ─────────────────────────────────────────────
+enum WinnerStatus {
+  SELECTED
+  PENDING_PAYOUT
+  PAID
+  FAILED
+  UNCLAIMED
+}
+
+model Winner {
+  id                  String        @id @default(uuid())
+  roundId             String        @map("round_id")
+  userId              String        @map("user_id")
+  number              Int           // The winning number value
+  prizeLamports       BigInt        @map("prize_lamports")
+  payoutWallet        String        @map("payout_wallet")
+  payoutTransaction   String?       @map("payout_transaction")
+  status              WinnerStatus  @default(SELECTED)
+  rank                Int           // 1-5 winner rank
+  paidAt              DateTime?     @map("paid_at")
+  createdAt           DateTime      @default(now()) @map("created_at")
+
+  round               GameRound     @relation(fields: [roundId], references: [id])
+  user                User          @relation(fields: [userId], references: [id])
+
+  @@unique([roundId, rank])
+  @@index([roundId])
+  @@index([userId])
+  @@map("winners")
+}
+
+// ─────────────────────────────────────────────
+// SESSIONS (for admin auth)
+// ─────────────────────────────────────────────
+model Session {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  token       String    @unique
+  expiresAt   DateTime  @map("expires_at")
+  ipAddress   String?   @map("ip_address")
+  userAgent   String?   @map("user_agent")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@index([token])
+  @@index([userId])
+  @@map("sessions")
+}
+
+// ─────────────────────────────────────────────
+// AUDIT LOGS
+// ─────────────────────────────────────────────
+model AuditLog {
+  id          String    @id @default(uuid())
+  roundId     String?   @map("round_id")
+  eventType   String    @map("event_type")
+  actor       String?   // User ID or "system" or "admin"
+  actorType   String    @default("user") @map("actor_type") // user | admin | system
+  data        Json?
+  ipAddress   String?   @map("ip_address")
+  timestamp   DateTime  @default(now())
+
+  round       GameRound? @relation(fields: [roundId], references: [id])
+
+  @@index([roundId])
+  @@index([eventType])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
+
+// ─────────────────────────────────────────────
+// RATE LIMIT TRACKING
+// ─────────────────────────────────────────────
+model RateLimitEntry {
+  id          String    @id @default(uuid())
+  key         String    @unique // e.g., "reserve:{userId}", "login:{ip}"
+  count       Int       @default(1)
+  resetAt     DateTime  @map("reset_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([resetAt])
+  @@map("rate_limit_entries")
+}

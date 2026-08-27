@@ -1,0 +1,229 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg: #0E0E1A;
+    --color-bg-darker: #080812;
+    --color-card: #1A1A2E;
+    --color-border: #2A2A40;
+    --color-text: #FFFFFF;
+    --color-text-muted: #8B8BA3;
+    --color-solana-green: #14F195;
+    --color-solana-purple: #9945FF;
+    --color-solana-blue: #00D1FF;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-solana-darker text-white font-sans antialiased;
+    background: linear-gradient(180deg, #0E0E1A 0%, #080812 100%);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Telegram WebApp specific overrides */
+  :global(.tg-viewport-stable) body {
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  /* Glass card effect */
+  .glass-card {
+    @apply bg-solana-card/80 backdrop-blur-xl border border-solana-border/50 rounded-2xl;
+  }
+
+  .glass-card-hover {
+    @apply glass-card transition-all duration-200 hover:border-solana-green/30 hover:shadow-lg hover:shadow-solana-green/5;
+  }
+
+  /* Solana gradient text */
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-solana-green to-solana-purple;
+  }
+
+  .gradient-text-blue {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-solana-blue to-solana-purple;
+  }
+
+  /* Number grid cells */
+  .number-cell {
+    @apply relative w-full aspect-square flex items-center justify-center rounded-lg
+           text-sm font-mono font-medium border transition-all duration-150
+           cursor-pointer select-none;
+  }
+
+  .number-cell-available {
+    @apply number-cell bg-game-available/50 border-solana-border/30
+           hover:border-solana-green/60 hover:bg-game-available
+           hover:shadow-sm hover:shadow-solana-green/10;
+  }
+
+  .number-cell-taken {
+    @apply number-cell bg-game-taken/30 border-game-takenBorder/20
+           text-solana-muted/50 cursor-not-allowed;
+  }
+
+  .number-cell-selected {
+    @apply number-cell bg-game-selected border-solana-purple
+           text-solana-purple shadow-lg shadow-solana-purple/20
+           ring-2 ring-solana-purple/30;
+  }
+
+  .number-cell-winner {
+    @apply number-cell bg-game-winner border-game-winnerBorder
+           text-yellow-400 shadow-lg shadow-yellow-500/20
+           animate-pulse-slow;
+  }
+
+  .number-cell-reserved {
+    @apply number-cell bg-game-reserved/50 border-game-reservedBorder/50
+           text-pink-400 cursor-not-allowed;
+  }
+
+  /* Primary button */
+  .btn-primary {
+    @apply relative px-6 py-3 rounded-xl font-semibold text-base
+           bg-gradient-to-r from-solana-green to-solana-purple
+           text-white shadow-lg shadow-solana-green/20
+           transition-all duration-200
+           hover:shadow-xl hover:shadow-solana-green/30
+           hover:scale-[1.02] active:scale-[0.98]
+           disabled:opacity-50 disabled:cursor-not-allowed
+           disabled:hover:scale-100 disabled:hover:shadow-lg;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 rounded-xl font-semibold text-base
+           bg-solana-card border border-solana-border
+           text-white transition-all duration-200
+           hover:border-solana-green/50 hover:bg-solana-card/80
+           active:scale-[0.98];
+  }
+
+  .btn-danger {
+    @apply px-6 py-3 rounded-xl font-semibold text-base
+           bg-red-500/20 border border-red-500/30
+           text-red-400 transition-all duration-200
+           hover:bg-red-500/30 hover:border-red-500/50
+           active:scale-[0.98];
+  }
+
+  /* Countdown timer */
+  .countdown-segment {
+    @apply flex flex-col items-center;
+  }
+
+  .countdown-value {
+    @apply text-2xl md:text-3xl font-bold font-mono
+           bg-solana-card border border-solana-border/50
+           rounded-xl px-3 py-2 min-w-[3.5rem] text-center;
+  }
+
+  .countdown-label {
+    @apply text-xs text-solana-muted mt-1 uppercase tracking-wider;
+  }
+
+  /* Prize pool display */
+  .prize-pool {
+    @apply text-center;
+  }
+
+  .prize-pool-value {
+    @apply text-4xl md:text-5xl font-bold font-display gradient-text;
+  }
+
+  .prize-pool-usd {
+    @apply text-lg text-solana-muted mt-1;
+  }
+
+  /* Status badges */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+  }
+
+  .badge-open {
+    @apply badge bg-solana-green/10 text-solana-green border border-solana-green/30;
+  }
+
+  .badge-closed {
+    @apply badge bg-red-500/10 text-red-400 border border-red-500/30;
+  }
+
+  .badge-pending {
+    @apply badge bg-yellow-500/10 text-yellow-400 border border-yellow-500/30;
+  }
+
+  .badge-completed {
+    @apply badge bg-solana-purple/10 text-solana-purple border border-solana-purple/30;
+  }
+
+  /* Input fields */
+  .input-field {
+    @apply w-full px-4 py-3 rounded-xl bg-solana-card border border-solana-border
+           text-white placeholder-solana-muted/50
+           focus:outline-none focus:border-solana-green/50 focus:ring-2 focus:ring-solana-green/10
+           transition-all duration-200;
+  }
+
+  /* Scrollbar styling */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-solana-border rounded-full;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-solana-muted/50;
+  }
+
+  /* Telegram safe area */
+  .telegram-safe-area {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-in {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .no-tap-highlight {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Mobile touch optimizations */
+@media (hover: none) {
+  .number-cell-available:active {
+    @apply border-solana-green bg-game-available scale-95;
+  }
+}
