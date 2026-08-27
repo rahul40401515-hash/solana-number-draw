@@ -22,6 +22,7 @@ interface RoundData {
   winnerCount: number;
   prizePoolLamports: string;
   totalEntries: number;
+  treasuryWallet: string;
   network: string;
 }
 
